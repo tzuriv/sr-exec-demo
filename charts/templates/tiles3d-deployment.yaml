@@ -1,0 +1,211 @@
+{{- $registry := .Values.registry | default "srregis.azurecr.io" }}
+{{- $appName := .Values.appName | default "sr-executor" }}
+{{- $name := .Values.deployment_3dtiles.name | default "sr-gate"}}
+{{- $imageName := .Values.imageName | default "lmy/sr-executor" }}
+{{- $versionTag := .Values.versionTag_n10 | default "latest" }}
+{{- $namespace := .Values.namespace }}
+{{- $storageName := .Values.storage.name }}
+{{- $env := .Values.env | default "dev" }}
+{{- $registryPullSecret := .Values.registryPullSecret }}
+{{- $replicaCount := .Values.deployment_3dtiles.container.replicaCount | default 1 }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "{{ $name }}-{{ $env }}"
+  namespace: {{ $namespace }}
+  labels:
+    app: "{{ $appName }}-{{ $env }}"
+spec:
+  replicas: {{ $replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{ $appName }}-{{ $env }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ $appName }}-{{ $env }}"
+        deploymentconfig: "{{ $name }}-{{ $env }}"
+    spec:
+      imagePullSecrets:
+      - name: {{ $registryPullSecret }}
+      volumes:
+        - name: "{{ $storageName }}-pv-{{ $env }}"
+          persistentVolumeClaim:
+            claimName: "{{ $storageName }}-pvc-{{ $env }}"
+      containers:
+        - args:
+            - ./run.sh
+            - 3DTiles
+            - threeDTiles
+          command:
+            - /bin/bash
+          name: "{{ $name }}-{{ $env }}"
+          image: "{{ $registry }}/{{ $imageName }}:{{ $versionTag }}"
+          volumeMounts:
+            - name: "{{ $storageName }}-pv-{{ $env }}"
+              mountPath: /data
+          env:
+            - name: RABBIT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RABBIT_HOST
+            - name: RABBIT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RABBIT_PORT
+            - name: RABBIT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "rabbit-{{ $env }}-secret"
+                  key: username
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "rabbit-{{ $env }}-secret"
+                  key: password
+            - name: RPC_EXCHANGE
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RPC_EXCHANGE
+            - name: PS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: PS_URL
+            - name: ALGO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: ALGO_URL
+            - name: PS_DBS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: PS_DBS_URL
+            - name: ALGO_URL_TEXTURE
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: ALGO_URL_TEXTURE
+            - name: NETWORK_CONST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: NETWORK_CONST
+            - name: MAP_CONST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: MAP_CONST
+            - name: LOGGER_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: LOGGER_DIR
+            - name: SR_TEXTURE_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: SR_TEXTURE_DIR
+            - name: DATASOURCE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: DATASOURCE_ID
+            - name: RADIUS
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RADIUS
+            - name: TIMEOUT_BETWEEN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: TIMEOUT_BETWEEN_REQUESTS
+            - name: TZ
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: TZ
+            - name: COUNT_RESEND_REQUEST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: COUNT_RESEND_REQUEST
+            - name: TILES3D_ESTATES_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_ESTATES_URL
+            - name: TILES3D_CONST_TEMPLATE_GLB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_CONST_TEMPLATE_GLB_NAME
+            - name: TILES3D_DATASOURCE_GEOMETRIC_ERROR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_DATASOURCE_GEOMETRIC_ERROR
+            - name: TILES3D_REGION_AREA_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_REGION_AREA_SIZE
+            - name: TILES3D_COORDINATES_WIDTH
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_COORDINATES_WIDTH
+            - name: TILES3D_COORDINATES_GEOMETRIC_ERROR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_COORDINATES_GEOMETRIC_ERROR
+            - name: TILES3D_COORDINATES_ROOT_GEOMETRIC_ERROR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_COORDINATES_ROOT_GEOMETRIC_ERROR
+            - name: TILES3D_DATASOURCE_MAP
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_DATASOURCE_MAP
+            - name: TILES3D_TILESET_DIRECTORY
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_TILESET_DIRECTORY
+            - name: TILES3D_LAYER_SERVICE_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_LAYER_SERVICE_PATH
+            - name: TILES3D_TEMPLATE_DS_TYPES
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_TEMPLATE_DS_TYPES
+            - name: TILES3D_TEMPLATE_DS_LODS
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_TEMPLATE_DS_LODS
+            - name: TILES3D_TILESETS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+                  key: TILES3D_TILESETS_URL
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%

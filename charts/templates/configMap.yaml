@@ -1,0 +1,27 @@
+{{- $namespace := .Values.namespace -}}
+{{- $env := .Values.env -}}
+{{- with .Values.config }}
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "{{ $namespace }}-{{ $env }}-cm"
+  namespace: {{ $namespace }}
+data:
+  RABBIT_PORT: "{{ .rabbit.port }}"
+  RABBIT_HOST: "{{ .rabbit.host }}"
+  RPC_EXCHANGE: "{{ .rabbit.rpc_exchange }}"
+  PS_URL:  "{{ .ps_url }}:"
+  PS_DBS_URL:  "{{ .psdbs_url }}"
+  ALGO_URL: "{{ .algo_url.algo_rest }}"
+  ALGO_URL_TEXTURE:  "{{ .algo_url.texture}}"
+  NETWORK_CONST:  "{{ .network.const }}"
+  MAP_CONST:  "{{ .network.map_const }}"
+  LOGGER_DIR:  "{{ .log_dir }}"
+  SR_TEXTURE_DIR:  "{{ .sr_texture_raltive_path }}"
+  DATASOURCE_ID:  "{{ .datasource_id }}"
+  RADIUS:  "{{ .radius }}"
+  TIMEOUT_BETWEEN_REQUESTS:  "{{ .retry.timeout }}"
+  COUNT_RESEND_REQUEST:  "{{ .retry.count }}"
+  TZ: "{{ .tz }}"
+
+{{- end }}

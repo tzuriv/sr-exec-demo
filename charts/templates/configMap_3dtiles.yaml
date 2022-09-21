@@ -1,0 +1,24 @@
+{{- $namespace := .Values.namespace -}}
+{{- $env := .Values.env -}}
+{{- with .Values.config.tiles3d }}
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "{{ $namespace }}-{{ $env }}-tiles3d-cm"
+  namespace: {{ $namespace }}
+data:
+  TILES3D_ESTATES_URL: "{{ .estates_url }}"
+  TILES3D_CONST_TEMPLATE_GLB_NAME: "{{ .const_template_glb_name }}"
+  TILES3D_DATASOURCE_GEOMETRIC_ERROR: "{{ .datasource_geometric_error }}"
+  TILES3D_REGION_AREA_SIZE:  "{{ .region_area_size }}"
+  TILES3D_COORDINATES_WIDTH: "{{ .coordinates_width }}"
+  TILES3D_COORDINATES_GEOMETRIC_ERROR:  "{{ .coordinates_geometric_error }}"
+  TILES3D_COORDINATES_ROOT_GEOMETRIC_ERROR:  "{{ .coordinates_root_geometry_error }}"
+  TILES3D_DATASOURCE_MAP:  "{{ .datasource_map }}"
+  TILES3D_TILESET_DIRECTORY:  "{{ .tileset_directory }}"
+  TILES3D_LAYER_SERVICE_PATH:  "{{ .layer_service_url }}"
+  TILES3D_TEMPLATE_DS_TYPES:  "{{ .template_ds_types }}"
+  TILES3D_TEMPLATE_DS_LODS:  "{{ .template_ds_lods }}"
+  TILES3D_TILESETS_URL:  "{{ .tilesets_url }}"
+
+{{- end }}

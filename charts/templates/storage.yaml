@@ -1,0 +1,39 @@
+{{- $namespace := .Values.namespace -}}
+{{- $env := .Values.env -}}
+{{- with .Values.storage }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{ .name }}-pv-{{ $env }}"
+  namespace: {{ $namespace }}
+spec:
+  capacity:
+    storage: {{ .storageCapacity }}
+  accessModes:
+    - {{ .accessModes }}
+  storageClassName: {{ .storageClassName }}
+  volumeMode: Filesystem
+  azureFile:
+    secretName: "{{ .secretName }}-{{ $env }}"
+    shareName:  {{ .shareName }}
+    readOnly: false
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .name }}-pvc-{{ $env }}"
+  namespace: {{ $namespace }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: {{ .storageClassName }}
+  resources:
+     requests:
+       storage: {{ .storageRequest }}
+  volumeName: "{{ .name }}-pv-{{ $env }}"
+  volumeMode: Filesystem
+
+---
+{{- end }}

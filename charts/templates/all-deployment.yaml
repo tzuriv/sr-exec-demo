@@ -1,0 +1,148 @@
+{{- $registry := .Values.registry | default "srregis.azurecr.io" }}
+  {{- $appName := .Values.appName | default "sr-executor" }}
+  {{- $imageName := .Values.imageName | default "lmy/sr-executor" }}
+  {{- $versionTag := .Values.versionTag_n16 | default "latest" }}
+  {{- $namespace := .Values.namespace }}
+  {{- $storageName := .Values.storage.name }}
+  {{- $env := .Values.env | default "dev" }}
+  {{- $registryPullSecret := .Values.registryPullSecret }}
+  {{- range .Values.deployment_rest }}
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: "{{ .name }}-{{ $env }}"
+  namespace: {{ $namespace }}
+  labels:
+    app: "{{ $appName }}-{{ $env }}"
+spec:
+  replicas: {{ .container.replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{ $appName }}-{{ $env }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ $appName }}-{{ $env }}"
+        deploymentconfig: "{{ .name }}-{{ $env }}"
+    spec:
+      imagePullSecrets:
+      - name: {{ $registryPullSecret }}
+      volumes:
+        - name: "{{ $storageName }}-pv-{{ $env }}"
+          persistentVolumeClaim:
+            claimName: "{{ $storageName }}-pvc-{{ $env }}"
+      containers:
+        - args:
+            - ./run.sh
+            - {{ .container.argument }}
+            - {{ .container.argument }}
+          command:
+            - /bin/bash
+          name: "{{ .name }}-{{ $env }}"
+          image: "{{ $registry }}/{{ $imageName }}:{{ $versionTag }}"
+          volumeMounts:
+            - name: "{{ $storageName }}-pv-{{ $env }}"
+              mountPath: /data
+          env:
+            - name: RABBIT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RABBIT_HOST
+            - name: RABBIT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RABBIT_PORT
+            - name: RABBIT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "rabbit-{{ $env }}-secret"
+                  key: username
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "rabbit-{{ $env }}-secret"
+                  key: password
+            - name: RPC_EXCHANGE
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RPC_EXCHANGE
+            - name: PS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: PS_URL
+            - name: ALGO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: ALGO_URL
+            - name: PS_DBS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: PS_DBS_URL
+            - name: ALGO_URL_TEXTURE
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: ALGO_URL_TEXTURE
+            - name: NETWORK_CONST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: NETWORK_CONST
+            - name: MAP_CONST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: MAP_CONST
+            - name: LOGGER_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: LOGGER_DIR
+            - name: SR_TEXTURE_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: SR_TEXTURE_DIR
+            - name: DATASOURCE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: DATASOURCE_ID
+            - name: RADIUS
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: RADIUS
+            - name: TIMEOUT_BETWEEN_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: TIMEOUT_BETWEEN_REQUESTS
+            - name: COUNT_RESEND_REQUEST
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: COUNT_RESEND_REQUEST
+            - name: TZ
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $namespace }}-{{ $env }}-cm"
+                  key: TZ
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+---
+{{- end }}
